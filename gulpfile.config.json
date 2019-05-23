@@ -1,0 +1,31 @@
+﻿{
+	"targets": {
+		"browser": {
+			"compile": [{
+				"input": "src/sass/rubik.scss",
+				"output": "docs/css/rubik.css",
+				"minify": false
+			}, {
+				"input": "src/js/rubik.js",
+				"output": "docs/js/rubik.js",
+				"minify": false
+			}],
+			"bundle": [{
+				"input": [
+					"node_modules/gsap/src/uncompressed/easing/EasePack.js",
+					"node_modules/gsap/src/uncompressed/TweenMax.js",
+					"node_modules/three/build/three.js"
+				],
+				"output": "docs/js/rubik-vendors.js",
+				"minify": true
+			}]
+		}
+	},
+	"options": {
+		"tfs": false,
+		"server": {
+			"src": "./docs",
+			"port": 9999
+		}
+	}
+}
