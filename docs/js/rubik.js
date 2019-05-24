@@ -53,7 +53,8 @@ function () {
       var section = document.querySelector('.rubik');
       var container = section.querySelector('.rubik__container'); // const shadow = section.querySelector('.rubik__shadow');
 
-      var title = section.querySelector('.rubik__headline');
+      var title = section.querySelector('.rubik__headline .title');
+      var abstract = section.querySelector('.rubik__headline .abstract');
 
       _dom.default.detect(body);
 
@@ -73,6 +74,7 @@ function () {
       this.container = container; // this.shadow = shadow;
 
       this.title = title;
+      this.abstract = abstract;
       this.loader = loader;
     }
   }, {
@@ -170,9 +172,6 @@ function () {
       this.play();
       this.onWindowResize();
     }
-  }, {
-    key: "enter",
-    value: function enter() {}
     /*
     addShadow(parent) {
     	const geometry = new THREE.PlaneGeometry(100, 100);
@@ -188,27 +187,9 @@ function () {
     */
 
   }, {
-    key: "randomRotateRubikRows",
-    value: function randomRotateRubikRows(rows) {
-      var _this2 = this;
-
-      // console.log(rows);
-      var dir = Math.random() > 0.5 ? 1 : -1;
-      var row = rows[Math.floor(Math.random() * rows.length)];
-      var rotation = row.rotation;
-      TweenMax.to(rotation, 0.5, {
-        y: rotation.y + dir * Math.PI / 2,
-        delay: 1,
-        ease: Sine.easeInOut,
-        onComplete: function onComplete() {
-          _this2.randomRotateRubikRows(rows);
-        }
-      });
-    }
-  }, {
     key: "addRubik",
     value: function addRubik(parent, rotation, texture) {
-      var _this3 = this;
+      var _this2 = this;
 
       var group = new THREE.Group();
       var step = 3;
@@ -234,7 +215,7 @@ function () {
 
         var positionCube = new THREE.Vector3(x - d, 0, z - d); // console.log(x, y, z, positionCube);
 
-        var cube = _this3.addCube(row, positionCube, texture, i, factor, duration, delay);
+        var cube = _this2.addCube(row, positionCube, texture, i, factor, duration, delay);
 
         return cube;
       });
@@ -281,10 +262,16 @@ function () {
       return mesh;
     }
   }, {
+    key: "enter",
+    value: function enter() {
+      this.rubikCubesAppearAnimation();
+    }
+  }, {
     key: "rubikCubesAppearAnimation",
-    value: function rubikCubesAppearAnimation(cubes, factor, duration, delay) {
-      var _this4 = this;
+    value: function rubikCubesAppearAnimation(factor, duration, delay) {
+      var _this3 = this;
 
+      var cubes = this.rubik.cubes;
       factor = factor || 4;
       duration = duration || 1.4;
       delay = delay || 0.01;
@@ -305,7 +292,26 @@ function () {
         });
       });
       setTimeout(function () {
-        _this4.randomRotateRubikRows(rows);
+        _this3.randomRotateRubikRows(_this3.rubik.rows);
+
+        TweenMax.set(_this3.title, {
+          transform: 'translate3d(0,80px,0)'
+        });
+        TweenMax.to(_this3.title, 0.4, {
+          transform: 'translate3d(0,0,0)',
+          opacity: 1,
+          delay: 1,
+          ease: Sine.easeInOut
+        });
+        TweenMax.set(_this3.abstract, {
+          transform: 'translate3d(0,80px,0)'
+        });
+        TweenMax.to(_this3.abstract, 0.4, {
+          transform: 'translate3d(0,0,0)',
+          opacity: 1,
+          delay: 1.2,
+          ease: Sine.easeInOut
+        });
       }, delay * cubes.length + duration);
     }
   }, {
@@ -331,6 +337,24 @@ function () {
             });
           }
         });
+      });
+    }
+  }, {
+    key: "randomRotateRubikRows",
+    value: function randomRotateRubikRows(rows) {
+      var _this4 = this;
+
+      // console.log(rows);
+      var dir = Math.random() > 0.5 ? 1 : -1;
+      var row = rows[Math.floor(Math.random() * rows.length)];
+      var rotation = row.rotation;
+      TweenMax.to(rotation, 0.5, {
+        y: rotation.y + dir * Math.PI / 2,
+        delay: 1,
+        ease: Sine.easeInOut,
+        onComplete: function onComplete() {
+          _this4.randomRotateRubikRows(rows);
+        }
       });
     }
   }, {
@@ -370,7 +394,7 @@ function () {
           camera.bottom = -height;
         } else {
           camera.aspect = size.width / size.height;
-          camera.zoom = 1.0;
+          camera.zoom = 1.2;
         }
 
         camera.updateProjectionMatrix();
@@ -395,8 +419,9 @@ function () {
       parallax.y += (this.mouse.y - parallax.y) / 8;
       var size = this.size;
       var sx = size.width < 1024 ? 0 : -3;
+      var sy = size.width < 1024 ? -2 : 0;
       this.rubik.position.x = sx + parallax.x * 0.2;
-      this.rubik.position.y = parallax.y * 0.2; //
+      this.rubik.position.y = sy + parallax.y * 0.2; //
 
       /*
       const titleXy = {
@@ -471,7 +496,7 @@ window.onload = function () {
   rubik.init();
   setTimeout(function () {
     console.log(rubik.rubik);
-    rubik.rubikCubesAppearAnimation(rubik.rubik.cubes);
+    rubik.enter();
   }, 1000);
 };
 
