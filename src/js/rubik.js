@@ -223,7 +223,7 @@ class Rubik {
 
 	rubikCubesAppearAnimation(factor, duration, delay) {
 		const cubes = this.rubik.cubes;
-		factor = factor || 4;
+		factor = factor || 1.5;
 		duration = duration || 1.4;
 		delay = delay || 0.01;
 		cubes.forEach((cube, i) => {
