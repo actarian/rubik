@@ -21,6 +21,7 @@ THREE.Euler.prototype.add = function (euler) {
 };
 
 var USE_ORTHO = false;
+var SHOW_HELPERS = false;
 
 var Rubik =
 /*#__PURE__*/
@@ -36,14 +37,11 @@ function () {
       x: 0,
       y: 0
     };
-    this.cities = [[43.9096538, 12.8399805], // pesaro
-    [41.8519772, 12.2347364], // rome
-    [51.5287718, -0.2416791], // london
-    [55.6713812, 12.4537393], // copenaghen
-    [40.6976637, -74.1197623], // new york
-    [19.3911668, -99.4238221], // mexico city
-    [39.9390731, 116.11726], // beijing
-    [31.2243084, 120.9162376]];
+    this.size = {
+      width: 0,
+      height: 0,
+      aspect: 0
+    };
   }
 
   _createClass(Rubik, [{
@@ -53,8 +51,8 @@ function () {
 
       var body = document.querySelector('body');
       var section = document.querySelector('.rubik');
-      var container = section.querySelector('.rubik__container');
-      var shadow = section.querySelector('.rubik__shadow');
+      var container = section.querySelector('.rubik__container'); // const shadow = section.querySelector('.rubik__shadow');
+
       var title = section.querySelector('.rubik__headline');
 
       _dom.default.detect(body);
@@ -72,8 +70,8 @@ function () {
       });
       this.body = body;
       this.section = section;
-      this.container = container;
-      this.shadow = shadow;
+      this.container = container; // this.shadow = shadow;
+
       this.title = title;
       this.loader = loader;
     }
@@ -100,33 +98,40 @@ function () {
         var height = width / this.container.offsetWidth * this.container.offsetHeight;
         camera = new THREE.OrthographicCamera(-width, width, height, -height, 0.01, 1000);
       } else {
-        camera = new THREE.PerspectiveCamera(35, window.innerWidth / window.innerHeight, 0.01, 1000);
-      }
-      /*
-       */
-      // const camera = new THREE.OrthographicCamera(window.innerWidth / -2, window.innerWidth / 2, window.innerHeight / 2, window.innerHeight / -2, 0.01, 1000);
+        camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.01, 1000);
+      } // const camera = new THREE.OrthographicCamera(window.innerWidth / -2, window.innerWidth / 2, window.innerHeight / 2, window.innerHeight / -2, 0.01, 1000);
 
 
-      camera.position.set(0, 5.0, 10.0);
+      camera.position.set(0, 5.0, 12.0);
       camera.up = new THREE.Vector3(0, 0, -1);
       camera.lookAt(new THREE.Vector3(0, 0, 0));
       this.camera = camera;
       var ambient = new THREE.AmbientLight(0x222222);
       scene.add(ambient);
       this.ambient = ambient;
-      var directional1;
-      directional1 = new THREE.DirectionalLight(0xffffff, 10.0);
-      directional1.position.set(0, 6.0, -20); // directional1.castShadow = true;
-      // directional1.shadowCameraVisible = true;
-      // directional1.mapSize.width = 2048;
-      // directional1.mapSize.height = 2048;
+      var light1;
+      light1 = new THREE.DirectionalLight(0xffffff, 4.0); // light1.castShadow = true;
+      // light1.shadowCameraVisible = true;
+      // light1.mapSize.width = 2048;
+      // light1.mapSize.height = 2048;
 
-      scene.add(directional1);
-      this.directional1 = directional1;
-      var directional2 = new THREE.DirectionalLight(0xffffff, 10.0);
-      directional2.position.set(0, -6.0, 20);
-      scene.add(directional2);
-      this.directional2 = directional2;
+      scene.add(light1);
+      this.light1 = light1;
+
+      if (SHOW_HELPERS) {
+        var light1Helper = new THREE.DirectionalLightHelper(light1, 1);
+        scene.add(light1Helper);
+      }
+
+      var light2 = new THREE.DirectionalLight(0xffffff, 4.0);
+      scene.add(light2);
+      this.light2 = light2;
+
+      if (SHOW_HELPERS) {
+        var light2Helper = new THREE.DirectionalLightHelper(light2, 1);
+        scene.add(light2Helper);
+      }
+
       var particleRef = new THREE.Vector3(0.0, 0.0, 1.0);
       this.particleRef = particleRef; // const shadow = this.addShadow(scene);
 
@@ -141,41 +146,33 @@ function () {
       this.rubikSpeedRotation = rubikSpeedRotation;
       this.rubikRotation = rubikRotation;
       this.rubik = rubik;
-      var particles = this.addParticles(rubik);
+      /*
+      const particles = addParticles(rubik);
       this.particles = particles;
+      */
+
       var dragListener = new _drag.default(this.container, function (e) {
         rubikStartDragRotation.copy(rubikDragRotation);
       }, function (e) {
         rubikDragRotation.copy(rubikStartDragRotation).add(new THREE.Euler(0, Math.PI * e.strength.x, 0, 'XYZ'));
-        rubikSpeedRotation.set(0, 0, 0, 'XYZ');
+        rubikSpeedRotation.set(0, 0.1, 0, 'XYZ');
       }, function (e) {
         rubikSpeedRotation.set(0, Math.PI * e.speed.x, 0, 'XYZ');
       });
       this.dragListener = dragListener;
       this.onWindowResize = this.onWindowResize.bind(this);
       this.onMouseMove = this.onMouseMove.bind(this);
+      this.onClick = this.onClick.bind(this);
       window.addEventListener('resize', this.onWindowResize, false);
       document.addEventListener('mousemove', this.onMouseMove, false);
+      this.container.addEventListener('click', this.onClick, false);
       this.section.classList.add('init');
       this.play();
       this.onWindowResize();
     }
   }, {
-    key: "createSprite",
-    value: function createSprite() {
-      var canvas = document.createElement('canvas');
-      canvas.width = 128;
-      canvas.height = 128;
-      var ctx = canvas.getContext('2d');
-      var gradient = ctx.createRadialGradient(canvas.width / 2, canvas.height / 2, 0, canvas.width / 2, canvas.height / 2, canvas.width / 2);
-      gradient.addColorStop(0, 'rgba(255,255,255,1)');
-      gradient.addColorStop(0.2, 'rgba(255,255,255,1)');
-      gradient.addColorStop(0.22, 'rgba(255,255,255,.2)');
-      gradient.addColorStop(1, 'rgba(255,255,255,0)');
-      ctx.fillStyle = gradient;
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
-      return canvas;
-    }
+    key: "enter",
+    value: function enter() {}
     /*
     addShadow(parent) {
     	const geometry = new THREE.PlaneGeometry(100, 100);
@@ -215,7 +212,11 @@ function () {
 
       var group = new THREE.Group();
       var step = 3;
+      var count = step * step * step;
       var size = 1;
+      var factor = 4;
+      var duration = 1.4;
+      var delay = 0.01;
       var rows = new Array(step).fill(null).map(function (dymmy, i) {
         var row = new THREE.Group();
         var d = (step - size) / 2;
@@ -224,7 +225,7 @@ function () {
         group.add(row);
         return row;
       });
-      var cubes = new Array(step * step * step).fill(null).map(function (dummy, i) {
+      var cubes = new Array(count).fill(null).map(function (dummy, i) {
         var x = Math.floor(i / (step * step));
         var y = Math.floor(i / step) % step;
         var z = i % step;
@@ -233,67 +234,109 @@ function () {
 
         var positionCube = new THREE.Vector3(x - d, 0, z - d); // console.log(x, y, z, positionCube);
 
-        return _this3.addCube(row, positionCube, texture);
+        var cube = _this3.addCube(row, positionCube, texture, i, factor, duration, delay);
+
+        return cube;
       });
-      rubik.rows = rows;
-      rubik.cubes = cubes;
+      group.rows = rows;
+      group.cubes = cubes;
       group.rotation.set(rotation.x, rotation.y, rotation.z);
       parent.add(group);
-      this.randomRotateRubikRows(rows);
       return group;
     }
   }, {
     key: "addCube",
-    value: function addCube(parent, position, texture) {
-      // const geometry = new THREE.SphereGeometry(0.5, 48, 48);
-      var geometry = (0, _RoundBoxGeometry.RoundBoxGeometry)(1.0, 1.0, 1.0, 0.05, 2, 2, 2, 5); // const geometry2 = new THREE.IcosahedronGeometry(0.5, 4);
-      // console.log(geometry2.vertices.length, geometry.vertices.length);
-
+    value: function addCube(parent, position, texture, i, factor, duration, delay) {
+      var geometry = (0, _RoundBoxGeometry.RoundBoxGeometry)(1.0, 1.0, 1.0, 0.1, 2, 2, 2, 5);
+      texture = texture.clone();
+      texture.needsUpdate = true;
+      texture.rotation = -0.02 + Math.random() * 0.04;
       var material = new THREE.MeshStandardMaterial({
-        color: '#fff',
-        roughness: 0.65,
-        metalness: 0.6,
-        map: texture
+        color: '#fefefe',
+        roughness: 0.9,
+        metalness: 0.1,
+        roughnessMap: texture,
+        map: texture,
+        transparent: true,
+        opacity: 0 // premultipliedAlpha: true,
+
       });
-      var materials = [material, material, material, material, material, material];
-      var mesh = new THREE.Mesh(geometry, materials);
+      /*
+      const materials = [
+      	material,
+      	material,
+      	material,
+      	material,
+      	material,
+      	material
+      ];
+      */
+
+      var mesh = new THREE.Mesh(geometry, material);
       mesh.castShadow = true;
       mesh.receiveShadow = false;
-      mesh.position.set(position.x, position.y, position.z);
+      mesh.position_ = position;
+      mesh.position.set(position.x * factor, position.y * factor, position.z * factor);
       parent.add(mesh);
       return mesh;
     }
   }, {
-    key: "addParticles",
-    value: function addParticles(parent) {
+    key: "rubikCubesAppearAnimation",
+    value: function rubikCubesAppearAnimation(cubes, factor, duration, delay) {
       var _this4 = this;
 
-      var texture = new THREE.CanvasTexture(this.createSprite());
-      var geometry = new THREE.Geometry();
-      var material = new THREE.PointsMaterial({
-        size: 0.07,
-        map: texture,
-        vertexColors: THREE.VertexColors,
-        blending: THREE.AdditiveBlending,
-        depthTest: false,
-        transparent: true
+      factor = factor || 4;
+      duration = duration || 1.4;
+      delay = delay || 0.01;
+      cubes.forEach(function (cube, i) {
+        var position = cube.position_;
+        cube.position.set(position.x * factor, position.y * factor, position.z * factor);
+        TweenMax.to(cube.position, duration, {
+          x: position.x,
+          y: position.y,
+          z: position.z,
+          delay: i * delay,
+          ease: Elastic.easeOut
+        });
+        TweenMax.to(cube.material, duration * 0.2, {
+          opacity: 1,
+          delay: i * delay,
+          ease: Sine.easeInOut
+        });
       });
-      var particles = new THREE.Points(geometry, material);
-      var points = this.cities.map(function (x) {
-        return _this4.calcPosFromLatLonRad(x[0], x[1], 0.5);
-      }).forEach(function (point, i) {
-        var vertex = new THREE.Vector3();
-        vertex.x = point.x;
-        vertex.y = point.y;
-        vertex.z = point.z;
-        geometry.vertices.push(vertex);
-        geometry.colors.push(new THREE.Color(0, 0, 0));
+      setTimeout(function () {
+        _this4.randomRotateRubikRows(rows);
+      }, delay * cubes.length + duration);
+    }
+  }, {
+    key: "rubikCubesWaveAnimation",
+    value: function rubikCubesWaveAnimation(cubes, factor, duration, delay) {
+      factor = factor || 1.5;
+      duration = duration || 1.4;
+      delay = delay || 0.01;
+      cubes.forEach(function (cube, i) {
+        var position = cube.position_;
+        TweenMax.to(cube.position, 0.3, {
+          x: position.x * factor,
+          y: position.y * factor,
+          z: position.z * factor,
+          delay: i * delay,
+          ease: Sine.easeOut,
+          onComplete: function onComplete() {
+            TweenMax.to(cube.position, duration, {
+              x: position.x,
+              y: position.y,
+              z: position.z,
+              ease: Elastic.easeOut
+            });
+          }
+        });
       });
-      geometry.mergeVertices();
-      geometry.verticesNeedUpdate = true;
-      particles.geometry = geometry;
-      parent.add(particles);
-      return particles;
+    }
+  }, {
+    key: "onClick",
+    value: function onClick(e) {
+      this.rubikCubesWaveAnimation(this.rubik.cubes);
     }
   }, {
     key: "onWindowResize",
@@ -301,11 +344,7 @@ function () {
       var container = this.container,
           renderer = this.renderer,
           camera = this.camera;
-      var size = {
-        width: 0,
-        height: 0,
-        aspect: 0
-      };
+      var size = this.size;
       size.width = container.offsetWidth;
       /*
       TweenMax.set(container, {
@@ -331,15 +370,10 @@ function () {
           camera.bottom = -height;
         } else {
           camera.aspect = size.width / size.height;
+          camera.zoom = 1.0;
         }
 
         camera.updateProjectionMatrix();
-      }
-
-      if (size.width < 1024) {
-        this.rubik.position.x = 0;
-      } else {
-        this.rubik.position.x = -3;
       }
     }
   }, {
@@ -358,73 +392,73 @@ function () {
       // parallax
       var parallax = this.parallax;
       parallax.x += (this.mouse.x - parallax.x) / 8;
-      parallax.y += (this.mouse.y - parallax.y) / 8; //
+      parallax.y += (this.mouse.y - parallax.y) / 8;
+      var size = this.size;
+      var sx = size.width < 1024 ? 0 : -3;
+      this.rubik.position.x = sx + parallax.x * 0.2;
+      this.rubik.position.y = parallax.y * 0.2; //
 
-      var titleXy = {
-        x: -50 + 0.5 * -parallax.x,
-        y: -50 + 0.5 * -parallax.y
+      /*
+      const titleXy = {
+      	x: -50 + 0.5 * -parallax.x,
+      	y: -50 + 0.5 * -parallax.y,
       };
       TweenMax.set(this.title, {
-        transform: 'translateX(' + titleXy.x + '%) translateY(' + titleXy.y + '%)'
+      	transform: 'translateX(' + titleXy.x + '%) translateY(' + titleXy.y + '%)'
       });
-      var shadowXy = {
-        x: -50 + 3 * -parallax.x,
-        y: -50 + 3 * -parallax.y
+      */
+
+      /*
+      const shadowXy = {
+      	x: -50 + 3 * -parallax.x,
+      	y: -50 + 3 * -parallax.y,
       };
       TweenMax.set(this.shadow, {
-        transform: 'translateX(' + shadowXy.x + '%) translateY(' + shadowXy.y + '%)'
+      	transform: 'translateX(' + shadowXy.x + '%) translateY(' + shadowXy.y + '%)'
       });
-      this.directional1.position.set(parallax.x * 0.3, 2 + parallax.y * 0.3, 0.5);
-      this.directional2.position.set(parallax.x * 0.3, -2 + parallax.y * 0.3, 0);
+      */
+
+      this.light1.position.set(parallax.x * 5.0, 6.0 + parallax.y * 2.0, 4.0);
+      this.light2.position.set(parallax.x * -5.0, -6.0 - parallax.y * 2.0, 4.0);
     }
   }, {
     key: "render",
     value: function render(delta) {
-      var _this5 = this;
-
       if (!this.dragListener.dragging) {
         this.rubikRotation.y += this.rubikSpeedRotation.y;
         this.rubikSpeedRotation.y += (0.002 - this.rubikSpeedRotation.y) / 50;
       }
 
       this.rubik.rotation.copy(this.rubikRotation).add(this.rubikDragRotation);
-      this.particles.geometry.vertices.forEach(function (vertex, i) {
-        var local = _this5.rubik.localToWorld(vertex.clone());
-
-        var distance = local.distanceTo(_this5.particleRef);
-        var s = Math.max(0, Math.min(1, 1 - distance)) * 5;
-        _this5.particles.geometry.colors[i] = new THREE.Color(s, s, s);
-        _this5.particles.geometry.colorsNeedUpdate = true;
+      /*
+      this.particles.geometry.vertices.forEach((vertex, i) => {
+      	const local = this.rubik.localToWorld(vertex.clone());
+      	const distance = local.distanceTo(this.particleRef);
+      	const s = Math.max(0, Math.min(1, (1 - distance))) * 5;
+      	this.particles.geometry.colors[i] = new THREE.Color(s, s, s);
+      	this.particles.geometry.colorsNeedUpdate = true;
       });
+      */
+
       this.renderer.render(this.scene, this.camera);
       this.doParallax();
     }
   }, {
     key: "play",
     value: function play() {
-      var _this6 = this;
+      var _this5 = this;
 
       var clock = new THREE.Clock();
 
       var loop = function loop(time) {
         var delta = clock.getDelta();
 
-        _this6.render(delta);
+        _this5.render(delta);
 
         window.requestAnimationFrame(loop);
       };
 
       loop();
-    }
-  }, {
-    key: "calcPosFromLatLonRad",
-    value: function calcPosFromLatLonRad(lat, lon, radius) {
-      var phi = (90 - lat) * (Math.PI / 180);
-      var theta = (lon + 180) * (Math.PI / 180);
-      var x = -(radius * Math.sin(phi) * Math.cos(theta));
-      var z = radius * Math.sin(phi) * Math.sin(theta);
-      var y = radius * Math.cos(phi);
-      return new THREE.Vector3(x, y, z);
     }
   }]);
 
@@ -435,6 +469,10 @@ var rubik = new Rubik();
 
 window.onload = function () {
   rubik.init();
+  setTimeout(function () {
+    console.log(rubik.rubik);
+    rubik.rubikCubesAppearAnimation(rubik.rubik.cubes);
+  }, 1000);
 };
 
 },{"./shared/RoundBoxGeometry":2,"./shared/dom":3,"./shared/drag.listener":4}],2:[function(require,module,exports){
@@ -444,7 +482,6 @@ Object.defineProperty(exports, "__esModule", {
   value: true
 });
 exports.RoundBoxGeometry = RoundBoxGeometry;
-exports.RoundBoxGeometry_ = RoundBoxGeometry_;
 
 /* jshint esversion: 6 */
 
@@ -559,86 +596,6 @@ function RoundBoxGeometry(width, height, depth, radius, widthSegments, heightSeg
     fullGeometry.addGroup(groupStart, planeGeom.index.count, materialIndex);
     groupStart += planeGeom.index.count;
   }
-}
-
-function RoundBoxGeometry_(width, height, depth, radius, widthSegments, heightSegments, depthSegments, smoothness) {
-  width = width || 1;
-  height = height || 1;
-  depth = depth || 1;
-  radius = radius || Math.min(Math.min(width, height), depth) * 0.25;
-  widthSegments = Math.floor(widthSegments) || 1;
-  heightSegments = Math.floor(heightSegments) || 1;
-  depthSegments = Math.floor(depthSegments) || 1;
-  smoothness = Math.max(3, Math.floor(smoothness) || 3);
-  var halfWidth = width * 0.5 - radius;
-  var halfHeight = height * 0.5 - radius;
-  var halfDepth = depth * 0.5 - radius;
-  var geometry = new THREE.Geometry(); // corners - 4 eighths of a sphere
-
-  var corner1 = new THREE.SphereGeometry(radius, smoothness, smoothness, 0, Math.PI * 0.5, 0, Math.PI * 0.5);
-  corner1.translate(-halfWidth, halfHeight, halfDepth);
-  var corner2 = new THREE.SphereGeometry(radius, smoothness, smoothness, Math.PI * 0.5, Math.PI * 0.5, 0, Math.PI * 0.5);
-  corner2.translate(halfWidth, halfHeight, halfDepth);
-  var corner3 = new THREE.SphereGeometry(radius, smoothness, smoothness, 0, Math.PI * 0.5, Math.PI * 0.5, Math.PI * 0.5);
-  corner3.translate(-halfWidth, -halfHeight, halfDepth);
-  var corner4 = new THREE.SphereGeometry(radius, smoothness, smoothness, Math.PI * 0.5, Math.PI * 0.5, Math.PI * 0.5, Math.PI * 0.5);
-  corner4.translate(halfWidth, -halfHeight, halfDepth);
-  geometry.merge(corner1);
-  geometry.merge(corner2);
-  geometry.merge(corner3);
-  geometry.merge(corner4); // edges - 2 fourths for each dimension
-  // width
-
-  var edge = new THREE.CylinderGeometry(radius, radius, width - radius * 2, smoothness, widthSegments, true, 0, Math.PI * 0.5);
-  edge.rotateZ(Math.PI * 0.5);
-  edge.translate(0, halfHeight, halfDepth);
-  var edge2 = new THREE.CylinderGeometry(radius, radius, width - radius * 2, smoothness, widthSegments, true, Math.PI * 1.5, Math.PI * 0.5);
-  edge2.rotateZ(Math.PI * 0.5);
-  edge2.translate(0, -halfHeight, halfDepth); // height
-
-  var edge3 = new THREE.CylinderGeometry(radius, radius, height - radius * 2, smoothness, heightSegments, true, 0, Math.PI * 0.5);
-  edge3.translate(halfWidth, 0, halfDepth);
-  var edge4 = new THREE.CylinderGeometry(radius, radius, height - radius * 2, smoothness, heightSegments, true, Math.PI * 1.5, Math.PI * 0.5);
-  edge4.translate(-halfWidth, 0, halfDepth); // depth
-
-  var edge5 = new THREE.CylinderGeometry(radius, radius, depth - radius * 2, smoothness, depthSegments, true, 0, Math.PI * 0.5);
-  edge5.rotateX(-Math.PI * 0.5);
-  edge5.translate(halfWidth, halfHeight, 0);
-  var edge6 = new THREE.CylinderGeometry(radius, radius, depth - radius * 2, smoothness, depthSegments, true, Math.PI * 0.5, Math.PI * 0.5);
-  edge6.rotateX(-Math.PI * 0.5);
-  edge6.translate(halfWidth, -halfHeight, 0);
-  edge.merge(edge2);
-  edge.merge(edge3);
-  edge.merge(edge4);
-  edge.merge(edge5);
-  edge.merge(edge6); // sides
-  // front
-
-  var side = new THREE.PlaneGeometry(width - radius * 2, height - radius * 2, widthSegments, heightSegments);
-  side.translate(0, 0, depth * 0.5); // right
-
-  var side2 = new THREE.PlaneGeometry(depth - radius * 2, height - radius * 2, depthSegments, heightSegments);
-  side2.rotateY(Math.PI * 0.5);
-  side2.translate(width * 0.5, 0, 0);
-  side.merge(side2);
-  geometry.merge(edge);
-  geometry.merge(side); // duplicate and flip
-
-  var secondHalf = geometry.clone();
-  secondHalf.rotateY(Math.PI);
-  geometry.merge(secondHalf); // top
-
-  var top = new THREE.PlaneGeometry(width - radius * 2, depth - radius * 2, widthSegments, depthSegments);
-  top.rotateX(-Math.PI * 0.5);
-  top.translate(0, height * 0.5, 0); // bottom
-
-  var bottom = new THREE.PlaneGeometry(width - radius * 2, depth - radius * 2, widthSegments, depthSegments);
-  bottom.rotateX(Math.PI * 0.5);
-  bottom.translate(0, -height * 0.5, 0);
-  geometry.merge(top);
-  geometry.merge(bottom);
-  geometry.mergeVertices();
-  return geometry;
 }
 
 },{}],3:[function(require,module,exports){

@@ -6,12 +6,13 @@ body {
 
 .rubik {
 	position: relative;
+	display: flex;
+	justify-content: flex-end;
 	width: 100%;
 	height: 70vh;
 	background: #eee;
 }
 
-.rubik__headline,
 .rubik__shadow {
 	display: none;
 }
@@ -23,6 +24,7 @@ body {
 	left: 0;
 	width: 100%;
 	height: 100%;
+	opacity: 0.02;
 
 	canvas {
 		display: block;
@@ -31,5 +33,23 @@ body {
 		left: 0;
 		width: 100%;
 		height: 100%;
+	}
+}
+
+.rubik__headline {
+	flex: 1 1 50%;
+	max-width: 50%;
+	display: flex;
+	flex-direction: column;
+	justify-content: center;
+
+	.container {
+		padding: 15px;
+		max-width: 480px;
+	}
+
+	.title,
+	.abstract {
+		color: #222222;
 	}
 }
