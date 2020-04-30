@@ -87,15 +87,15 @@ export function RoundBoxGeometry(width, height, depth, radius, widthSegments, he
 				planeGeom.rotateX(angle);
 		}
 		// merge positions
-		position.array.forEach(function(p) {
+		Array.prototype.slice.call(position.array).forEach(function(p) {
 			fullPosition.push(p);
 		});
 		// merge uvs
-		uv.array.forEach(function(u) {
+		Array.prototype.slice.call(uv.array).forEach(function(u) {
 			fullUvs.push(u);
 		});
 		// merge indices
-		planeGeom.index.array.forEach(function(a) {
+		Array.prototype.slice.call(planeGeom.index.array).forEach(function(a) {
 			fullIndex.push(a + fullIndexStart);
 		});
 		fullIndexStart += position.count;
